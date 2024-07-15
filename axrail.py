@@ -6,7 +6,7 @@ class VendingMachine:
         "D": ("Water", 7),
     }
 
-    notes = [100, 50, 20, 10, 5, 1]
+    notes = [(100, 0), (50, 0), (20, 2), (10, 10), (5, 10), (1, 10)]
 
     def list_items(self):
         """
@@ -32,12 +32,26 @@ class VendingMachine:
         change_amount = amount_paid - price
         remaining = change_amount
         change_note = {}
-        for note in self.notes:
+        for i in range(len(self.notes)-1, -1, -1):
+            note_tuple = self.notes[i]
+            note = note_tuple[0]
+            note_available = note_tuple[1]
             if remaining == 0:
                 break
-            note_amount = remaining // note
-            remaining %= note
-            change_note[note] = note_amount
+            note_amount_required = remaining // note
+            note_count = min(note_amount_required, note_available)
+            if note_count > 0:
+                remaining -= note * note_count
+                note_available -= note_count
+            
+                change_note[note] = note_count
+            print(change_note)
+            print(remaining)
+
+        if remaining > 0:
+                print("Vending machine has insufficient amount of note")
+                return None, None
+        
         return change_note, change_amount
 
 
@@ -64,6 +78,8 @@ if __name__ == "__main__":
             continue
 
         change_note, change_amount = vm.purchase(price, amount_paid)
+        if change_note is None:
+            continue
         print(f"Please take your drinks and change with a total amount of {change_amount:.2f}")
         for note, amount in change_note.items():
             if amount > 0:
