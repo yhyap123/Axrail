@@ -6,7 +6,14 @@ class VendingMachine:
         "D": ("Water", 7),
     }
 
-    notes = [(100, 0), (50, 0), (20, 2), (10, 10), (5, 10), (1, 10)]
+    notes = {
+        100: 0, 
+        50: 1, 
+        20: 2, 
+        10: 3, 
+        5: 10, 
+        1: 10
+    }
 
     def list_items(self):
         """
@@ -25,17 +32,15 @@ class VendingMachine:
         print("This item is not available")
         return None
 
-    def purchase(self, price, amount_paid):
+    def purchase(self, change_amount):
         """
         Calculate the amount of change and number of notes
         """
-        change_amount = amount_paid - price
         remaining = change_amount
         change_note = {}
-        for i in range(len(self.notes)-1, -1, -1):
-            note_tuple = self.notes[i]
-            note = note_tuple[0]
-            note_available = note_tuple[1]
+        for note in self.notes.keys():
+            change_note[note] = 0
+        for note, note_available in self.notes.items():
             if remaining == 0:
                 break
             note_amount_required = remaining // note
@@ -43,16 +48,27 @@ class VendingMachine:
             if note_count > 0:
                 remaining -= note * note_count
                 note_available -= note_count
-            
-                change_note[note] = note_count
-            print(change_note)
-            print(remaining)
+                self.notes[note] = note_available
+            change_note[note] = note_count
+
+        for ic_note, ic_note_count in change_note.items():
+            for note, note_available in self.notes.items():
+                if note < ic_note and note_available > 0:
+                    no_required = ic_note // note
+                    note_available_count = note_available // no_required 
+                    while note_available - no_required > 0 and ic_note_count > 0:
+                        ic_note_count -= 1
+                        change_note[ic_note] = ic_note_count
+                        change_note[note] += no_required
+                        note_available -= no_required
+                        self.notes[note] = note_available
+                        self.notes[ic_note] += 1
 
         if remaining > 0:
-                print("Vending machine has insufficient amount of note")
-                return None, None
+            print("Vending machine has insufficient amount of note")
+            return None
         
-        return change_note, change_amount
+        return change_note
 
 
 if __name__ == "__main__":
@@ -76,8 +92,8 @@ if __name__ == "__main__":
         if amount_paid < price:
             print("Insufficient amount")
             continue
-
-        change_note, change_amount = vm.purchase(price, amount_paid)
+        change_amount = amount_paid - price
+        change_note = vm.purchase(change_amount)
         if change_note is None:
             continue
         print(f"Please take your drinks and change with a total amount of {change_amount:.2f}")
